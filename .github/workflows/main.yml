@@ -1,3 +1,37 @@
+name: Build Powerpay-Kernel
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - qa
+          - stage
+          - prod
+      oci_bucket:
+        description: 'OCI Object Storage Bucket'
+        required: true
+        default: 'ppv2-1-dev-m2repo'
+        type: choice
+        options:
+          - ppv2-1-dev-m2repo
+          - ppv2-1-prod-m2repo
+      skipTests:
+        description: 'Skip tests during build'
+        required: true
+        default: 'false'
+        type: boolean          
+
+env:
+  OCI_BUCKET_NAME: ${{ github.event.inputs.oci_bucket }}
+  SKIP_TESTS: ${{ github.event.inputs.skipTests }}
+  OCI_REGION: ap-singapore-1
+
 jobs:
   build:
     runs-on: ubuntu-latest
