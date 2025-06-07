@@ -87,6 +87,7 @@ jobs:
           oci os object bulk-download \
             --bucket-name ${{ env.OCI_BUCKET_NAME }} \
             --dest-dir ~/.m2/repository
+            --overwrite
 
       - name: Cache Maven packages
         uses: actions/cache@v4
