@@ -58,7 +58,14 @@ jobs:
       run: |
         sudo apt update
         curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh | bash -s -- --accept-all-defaults
-        echo 'export PATH=$PATH:~/.oci-cli/bin' >> $GITHUB_ENV
+        echo 'export PATH=$HOME/.oci-cli/bin:$PATH' >> $GITHUB_ENV
+        echo 'PATH updated for OCI CLI'
+
+    - name: Verify OCI CLI Installation
+      run: |
+        export PATH=$HOME/.oci-cli/bin:$PATH
+        oci --version
+        echo "OCI CLI installation verified successfully"
 
     - name: Configure OCI credentials
       run: |
@@ -76,6 +83,7 @@ jobs:
 
     - name: Download dependencies from OCI
       run: |
+        export PATH=$HOME/.oci-cli/bin:$PATH
         mkdir -p ~/.m2/repository
         oci os object bulk-download \
           --bucket-name ${{ env.OCI_BUCKET_NAME }} \
@@ -101,6 +109,7 @@ jobs:
 
     - name: Upload artifacts and dependencies to OCI
       run: |
+        export PATH=$HOME/.oci-cli/bin:$PATH
         oci os object bulk-upload \
           --bucket-name ${{ env.OCI_BUCKET_NAME }} \
           --src-dir ~/.m2/repository
