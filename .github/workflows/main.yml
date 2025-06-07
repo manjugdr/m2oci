@@ -114,4 +114,4 @@ jobs:
             --bucket-name ${{ env.OCI_BUCKET_NAME }} \
             --src-dir ~/.m2/repository
             --overwrite
-            --exclude "*.yaml"
+            --debug
