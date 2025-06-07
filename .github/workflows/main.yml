@@ -113,3 +113,4 @@ jobs:
           oci os object bulk-upload \
             --bucket-name ${{ env.OCI_BUCKET_NAME }} \
             --src-dir ~/.m2/repository
+            --overwrite
