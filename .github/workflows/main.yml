@@ -52,22 +52,24 @@ jobs:
           echo 'export M2_HOME=/opt/apache-maven-3.2.5' >> $GITHUB_ENV
           echo 'export PATH=$M2_HOME/bin:$PATH' >> $GITHUB_ENV
 
-      - name: Cache oci-cli
-        id: cache-oci-cli
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.oci
-            /usr/local/bin/oci
-            ~/bin/oci-cli-scripts
-            ~/lib/oracle-cli
-          key: ${{ runner.os }}-oci-1
-
-      - name: Install oci-cli
-        if: steps.cache-oci-cli.outputs.cache-hit != 'true'
+      - name: Install OCI CLI prerequisites
         run: |
-          wget https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh
-          sudo bash install.sh --accept-all-defaults --exec-dir /usr/local/bin
+          sudo apt-get update
+          sudo apt-get install -y python3-pip python3-venv
+
+      - name: Install OCI CLI
+        run: |
+          python3 -m venv ~/oci-cli-venv
+          source ~/oci-cli-venv/bin/activate
+          pip install oci-cli
+
+      - name: Verify OCI CLI installation
+        run: |
+          source ~/oci-cli-venv/bin/activate
+          oci --version
+
+      - name: Configure OCI CLI
+        run: |
           mkdir -p ~/.oci
           echo [DEFAULT] >> ~/.oci/config
           echo user="${{ secrets.OCI_DEV_USER_OCID }}" >> ~/.oci/config
@@ -76,11 +78,11 @@ jobs:
           echo tenancy="${{ secrets.OCI_DEV_TENANCY_OCID }}" >> ~/.oci/config
           echo region="${{ secrets.OCI_REGION }}" >> ~/.oci/config
           echo "${{ secrets.OCI_DEV_PRIVATE_KEY }}" >> ~/.oci/oci_api_key.pem
-          oci setup repair-file-permissions --file ~/.oci/config
-          oci setup repair-file-permissions --file ~/.oci/oci_api_key.pem
+          chmod 600 ~/.oci/config ~/.oci/oci_api_key.pem
 
       - name: Download dependencies from OCI
         run: |
+          source ~/oci-cli-venv/bin/activate
           mkdir -p ~/.m2/repository
           oci os object bulk-download \
             --bucket-name ${{ env.OCI_BUCKET_NAME }} \
@@ -106,6 +108,7 @@ jobs:
 
       - name: Upload artifacts and dependencies to OCI
         run: |
+          source ~/oci-cli-venv/bin/activate
           oci os object bulk-upload \
             --bucket-name ${{ env.OCI_BUCKET_NAME }} \
             --src-dir ~/.m2/repository
