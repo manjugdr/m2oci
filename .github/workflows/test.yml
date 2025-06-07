@@ -1,0 +1,147 @@
+name: Test-Build Powerpay-Kernel
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - qa
+          - stage
+          - prod
+      oci_bucket:
+        description: 'OCI Object Storage Bucket'
+        required: true
+        default: 'ppv2-1-dev-m2repo'
+        type: choice
+        options:
+          - ppv2-1-dev-m2repo
+          - ppv2-1-prod-m2repo
+      skipTests:
+        description: 'Skip tests during build'
+        required: true
+        default: 'false'
+        type: boolean          
+env:
+  OCI_BUCKET_NAME: ${{ github.event.inputs.oci_bucket }}
+  SKIP_TESTS: ${{ github.event.inputs.skipTests }}
+  OCI_REGION: ap-singapore-1
+  OCI_DEV_USER_OCID: ocid1.user.oc1..aaaaaaaa5rqkyr2m6wb5wkgchcory2anq4wci3km66uzot5xlwvlmscfrbqa
+  OCI_DEV_KEY_FINGERPRINT: 21:09:32:01:15:7f:cc:e4:f4:07:63:38:db:ad:52:fa
+  OCI_DEV_TENANCY_OCID: ocid1.tenancy.oc1..aaaaaaaavtbk3l25fzaw4snlbc26ho4tk3k5cawmfkstv57na26noqdr3v3q
+  OCI_DEV_PRIVATE_KEY: |
+    -----BEGIN PRIVATE KEY-----
+    MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCzH2950rstTZyK
+    9VzjjJBl3M6lZ8q6aZ1Re0G/gIdGbpNGu/VMw73sMaOGjUp8420rSFZmrN+9QFig
+    nyDn7SUFt8jtcSCnhkYZ1tEpYWRdhTQg9tNwsWE/4GnZpOu59oI6JfmlDxTf4YvI
+    /wV7S4DQFdGHxt49KObjyFeWONLq9wr/WcpUGDPsrkcP0aUssi/eytj2QQETZJSj
+    +MNKkc2hAaL+Mb4F5OTM3nvxIpRmIxW0V8V7HaxmE3+9vdKVxktRdm9d+DR9zUIq
+    WKOkiqjZO0i4qvtrIWMFK2EaINwgaapyND8TXnLfV1uBkc4/2eVoYLpIiFTEvoec
+    AwHrVje7AgMBAAECggEACZDoNy1V6bl3XsRzzYM4Qvhj4NmGLiZtzGg0vrFyiARn
+    wSNQmmTpw69y+ECbdcf/kIwwcRNSb5z8Hrfg3gIANCn4hRXBlLDLFZ4vVXJqFcSD
+    YC9OY3pVoz+s536zSB8uHUTh7Dq99qbo/DcCZ+9EVdiUdBfezo1cp1WPt+oY+YtZ
+    Evk4dHinZPcQfJ3T3X23TUWAVYjE2oIXpUEIjXvLXBwIonIgAt8b7OzHVuRn8lCN
+    AqNYD52nq82Xgadc7vyllp/VEzm6mL/6taQiqCjZNSOSMUIlrc67iV95eBhHp7oM
+    9ehNPSBRCtHOXHFNEjOTxILwW/PzLA4freSTDief4QKBgQDks1QuXKzE5kWjRehR
+    9cMbfBoKbA1/pooMX7EM4xgZylYLTAPFpebffy9NxiVbivjvpH6gFvt2dh/lnYo/
+    LVBtKlZjk3qKFzf90v6am6Cf7Llh8BY7zKniWEyJXqVREVryxj4nhSaVQCZdvtt6
+    A5aGINmJQ4EW0IjunL6JhegetwKBgQDIgRohjEHl+7JC+I23CAG/B1mAyVDhcQbY
+    eqYUuH4HhWE5mWbXiLlau1jaOVgBEYvquq8cZcN4Po+X1yQsQEM1+kIBnrFRRxbq
+    Zzwr1EmbEG/PnBXZqUMItpkAuU6BZ0oPJ1WIYjf/6ndqI97iwQsN8CTS5Ie+r1w8
+    ixkZsi4rHQKBgAVfwWalftnRn2lKxz7Fy6Plsqb0Cw0o2K2ZwgtPes2AV61ESAJo
+    95fg4TeupEoWZesbrm4MnDQYan92yDzbz7wA9q64VHTSPtqUDq+LYKbhZSnL/nnB
+    QWy0Lng75R6WjdCOn/9FvbZcH4qsZXPkibD1LKdxEqN6mv0gacnJf77ZAoGBAJHQ
+    ed198Aq+QgS8V+uNEiAHy0qCnaRmG3FhuNiG13jGwk8uRYFnuEzIxLRnUZ3tUdDS
+    FTlUtJQFA06MsozP61Ec/9XHv/J4/axYiYTibOktSfM08xsJImv6x0ikevhW0qA0
+    ndqCe3FM5a02CwjjFRP82frZIfNF+pE5I3bxguvtAoGBAMqcYJ/MZbkEDviCGZzj
+    mvKNArAFPSq+mHr/VXuBb5LjXs9qoDbuTxpskKRmFuyqLnHr/8K4aM+tX9XP1bN9
+    FgWhgeFhoOWvK528I/VsDefZgZiirL/axKoUWlfqkPx3F9JYi7Q6espFOzwbMPTg
+    ptU9VYOZsyLUSMQNVzb7yJWC
+    -----END PRIVATE KEY-----
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+
+      - name: Set up Maven 3.2.5
+        run: |
+          wget https://archive.apache.org/dist/maven/maven-3/3.2.5/binaries/apache-maven-3.2.5-bin.tar.gz
+          tar -xzf apache-maven-3.2.5-bin.tar.gz
+          sudo mv apache-maven-3.2.5 /opt/
+          echo 'export M2_HOME=/opt/apache-maven-3.2.5' >> $GITHUB_ENV
+          echo 'export PATH=$M2_HOME/bin:$PATH' >> $GITHUB_ENV
+          
+      - name: Install OCI CLI prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip python3-venv
+
+      - name: Install OCI CLI
+        run: |
+          python3 -m venv ~/oci-cli-venv
+          source ~/oci-cli-venv/bin/activate
+          pip install oci-cli
+
+      - name: Verify OCI CLI installation
+        run: |
+          source ~/oci-cli-venv/bin/activate
+          oci --version
+
+      - name: Configure OCI CLI
+        run: |
+          mkdir -p ~/.oci
+          echo [DEFAULT] >> ~/.oci/config
+          echo user="${{ env.OCI_DEV_USER_OCID }}" >> ~/.oci/config
+          echo fingerprint="${{ env.OCI_DEV_KEY_FINGERPRINT }}" >> ~/.oci/config
+          echo key_file=~/.oci/oci_api_key.pem >> ~/.oci/config
+          echo tenancy="${{ env.OCI_DEV_TENANCY_OCID }}" >> ~/.oci/config
+          echo region="${{ env.OCI_REGION }}" >> ~/.oci/config
+          echo "${{ env.OCI_DEV_PRIVATE_KEY }}" > ~/.oci/oci_api_key.pem
+          echo OCI_API_KEY >> ~/.oci/oci_api_key.pem
+          chmod 600 ~/.oci/config ~/.oci/oci_api_key.pem
+          export SUPPRESS_LABEL_WARNING=True
+
+      - name: Download dependencies from OCI
+        run: |
+          source ~/oci-cli-venv/bin/activate
+          mkdir -p ~/.m2/repository
+          oci os object bulk-download \
+            --bucket-name ${{ env.OCI_BUCKET_NAME }} \
+            --dest-dir ~/.m2/repository \
+            --overwrite
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build with Maven
+        run: |
+          if [ "${{ env.SKIP_TESTS }}" = "true" ]; then
+            MAVEN_ARGS="-DskipTests"
+          else
+            MAVEN_ARGS=""
+          fi  
+          mvn clean install ${MAVEN_ARGS}
+
+      - name: Upload artifacts and dependencies to OCI
+        run: |
+          source ~/oci-cli-venv/bin/activate
+          oci os object bulk-upload \
+            --bucket-name ${{ env.OCI_BUCKET_NAME }} \
+            --src-dir ~/.m2/repository
